@@ -151,7 +151,7 @@ def main():
     if "theme" not in st.session_state:
         st.session_state.theme = "dark"
  
-    theme = st.session_state.theme
+    theme = st.session_state.get("theme", "dark")
  
     load_css(os.path.join(os.getcwd(), "static", "style.css"))
     inject_local_font(os.path.join(os.getcwd(), "static", "AdobeClean.otf"), "AdobeClean")
@@ -412,3 +412,4 @@ def main():
  
 if __name__ == "__main__":
     main()
+
