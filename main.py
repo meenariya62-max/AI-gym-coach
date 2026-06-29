@@ -384,13 +384,10 @@ def main():
         uploaded = st.camera_input("📸 Capture frame for pose analysis", key="cam_capture")
 
         if uploaded:
-            import base64
             frame_bytes = uploaded.getvalue()
-            frame_b64 = "data:image/jpeg;base64," + base64.b64encode(frame_bytes).decode()
-
             processor = st.session_state.camera_processor
             with st.spinner("Analyzing pose..."):
-                metrics = processor.process_frame(frame_b64, exercise)
+                metrics = processor.process_frame(frame_bytes, exercise)
 
             if metrics.get("pose_detected"):
                 update_session_metrics(metrics, exercise)
