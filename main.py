@@ -73,7 +73,8 @@ def main():
             plan_reps = st.number_input("Reps per Set", min_value=0, max_value=50, key="plan_reps", step=1)
             st.markdown("")
 
-            start_session_button = st.button("Start Workout", width="stretch", key="start_session_button")
+            # FIX 1: replaced width="stretch" with use_container_width=True
+            start_session_button = st.button("Start Workout", use_container_width=True, key="start_session_button")
 
             if start_session_button:
                 st.session_state.exercise_type = plan_exercise
@@ -103,7 +104,8 @@ def main():
 
             st.info(f"**{exercise}** -- {sets} Sets / {reps} Reps")
 
-            end_session_button = st.button("End Workout", key="end_session_button", width="stretch")
+            # FIX 1 (same): replaced width="stretch" with use_container_width=True
+            end_session_button = st.button("End Workout", key="end_session_button", use_container_width=True)
 
             if end_session_button:
                 st.session_state.workout_started = False
@@ -255,7 +257,8 @@ def main():
                 "Time (sec)": "sum"
             }).reset_index()
             agg_df.index += 1
-            st.table(agg_df, border="horizontal")
+            # FIX 2: removed unsupported border="horizontal" argument
+            st.table(agg_df)
         else:
             st.info("No workout history found.")
 
