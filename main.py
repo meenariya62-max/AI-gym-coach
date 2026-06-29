@@ -147,7 +147,6 @@ def main():
         layout="centered"
     )
  
-    # Theme state — must be before CSS inject
     if "theme" not in st.session_state:
         st.session_state.theme = "dark"
  
@@ -317,7 +316,6 @@ def main():
         st.markdown("")
         st.success(f"🤖 **Coach:** {st.session_state.coach_feedback}")
  
-    # Exercise cards (always visible)
     selected_exercise = st.session_state.get("exercise_type") or st.session_state.get("plan_exercise", EXERCISE_OPTIONS[0])
     render_exercise_cards(selected_exercise)
     st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
@@ -343,37 +341,42 @@ def main():
             unsafe_allow_html=True,
         )
     else:
-        # ── FIXED: Reliable cloud detection ───────────────────────────
-        is_cloud = (
-            os.environ.get("HOME", "") == "/home/adminuser"
-            or os.environ.get("STREAMLIT_SHARING_MODE") is not None
-            or not os.path.exists("/dev/video0")
+        # ── TURN servers for cloud WebRTC camera support ───────────────
+        RTC_CONFIGURATION = {
+            "iceServers": [
+                {"urls": ["stun:stun.l.google.com:19302"]},
+                {"urls": ["stun:stun1.l.google.com:19302"]},
+                {
+                    "urls": ["turn:openrelay.metered.ca:80"],
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                },
+                {
+                    "urls": ["turn:openrelay.metered.ca:443"],
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                },
+                {
+                    "urls": ["turn:openrelay.metered.ca:443?transport=tcp"],
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                },
+            ]
+        }
+
+        context = webrtc_streamer(
+            key="exercise-analysis",
+            mode=WebRtcMode.SENDRECV,
+            video_processor_factory=VideoProcessorClass,
+            rtc_configuration=RTC_CONFIGURATION,
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True
         )
- 
-        if is_cloud:
-            st.info("Camera-based pose detection works when running locally. You can still save workouts using End Workout and view your history below.")
-            st.markdown(
-                "<div style='text-align:center;padding:40px;border:2px dashed #444;border-radius:14px;margin:16px 0'>"
-                "<div style='font-size:3rem'>📷</div>"
-                "<h3>Camera unavailable on Cloud</h3>"
-                "<p>Run locally for full pose detection.<br>Use <strong>End Workout</strong> to save your session.</p>"
-                "</div>",
-                unsafe_allow_html=True
-            )
-        else:
-            context = webrtc_streamer(
-                key="exercise-analysis",
-                mode=WebRtcMode.SENDRECV,
-                video_processor_factory=VideoProcessorClass,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-                media_stream_constraints={"video": True, "audio": False},
-                async_processing=True
-            )
-            sync_metrics_update(context)
-            if context.state.playing:
-                time.sleep(0.25)
-                st.rerun()
-            inject_webrtc_styles()
+        sync_metrics_update(context)
+        if context.state.playing:
+            time.sleep(0.25)
+            st.rerun()
+        inject_webrtc_styles()
  
     # ── WORKOUT HISTORY ───────────────────────────────────────────────
     st.divider()
