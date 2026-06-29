@@ -342,19 +342,32 @@ def main():
             unsafe_allow_html=True,
         )
     else:
-        context = webrtc_streamer(
-            key="exercise-analysis",
-            mode=WebRtcMode.SENDRECV,
-            video_processor_factory=VideoProcessorClass,
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-            media_stream_constraints={"video": True, "audio": False},
-            async_processing=True
-        )
-        sync_metrics_update(context)
-        if context.state.playing:
-            time.sleep(0.25)
-            st.rerun()
-        inject_webrtc_styles()
+        import os
+        is_cloud = os.environ.get("HOME", "").startswith("/home/adminuser")
+        if is_cloud:
+            st.info("Camera-based pose detection works when running locally. You can still save workouts using End Workout and view your history below.")
+            st.markdown(
+                "<div style='text-align:center;padding:40px;border:2px dashed #444;border-radius:14px;margin:16px 0'>"
+                "<div style='font-size:3rem'>📷</div>"
+                "<h3>Camera unavailable on Cloud</h3>"
+                "<p>Run locally for full pose detection.<br>Use <strong>End Workout</strong> to save your session.</p>"
+                "</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            context = webrtc_streamer(
+                key="exercise-analysis",
+                mode=WebRtcMode.SENDRECV,
+                video_processor_factory=VideoProcessorClass,
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+                media_stream_constraints={"video": True, "audio": False},
+                async_processing=True
+            )
+            sync_metrics_update(context)
+            if context.state.playing:
+                time.sleep(0.25)
+                st.rerun()
+            inject_webrtc_styles()
  
     # ── WORKOUT HISTORY ───────────────────────────────────────────────
     st.divider()
