@@ -189,7 +189,7 @@ def main():
             icon = "☀️" if theme == "dark" else "🌙"
             label = "Light" if theme == "dark" else "Dark"
             if st.button(icon, key="theme_toggle", help=f"Switch to {label} mode"):
-                st.session_state.theme = "light" if theme == "dark" else "dark"
+                st.session_state["theme"] = "light" if st.session_state.get("theme", "dark") == "dark" else "dark"
                 st.rerun()
  
         render_profile_card()
@@ -412,4 +412,5 @@ def main():
  
 if __name__ == "__main__":
     main()
+
 
