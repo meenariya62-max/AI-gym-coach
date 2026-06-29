@@ -8,3 +8,4 @@ gtts==2.5.3
 python-dotenv==1.2.2
 plotly>=5.0.0
 av>=10.0.0
+Pillow==10.4.0
