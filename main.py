@@ -73,7 +73,6 @@ def main():
             plan_reps = st.number_input("Reps per Set", min_value=0, max_value=50, key="plan_reps", step=1)
             st.markdown("")
 
-            # FIX 1: replaced width="stretch" with use_container_width=True
             start_session_button = st.button("Start Workout", use_container_width=True, key="start_session_button")
 
             if start_session_button:
@@ -104,7 +103,6 @@ def main():
 
             st.info(f"**{exercise}** -- {sets} Sets / {reps} Reps")
 
-            # FIX 1 (same): replaced width="stretch" with use_container_width=True
             end_session_button = st.button("End Workout", key="end_session_button", use_container_width=True)
 
             if end_session_button:
@@ -217,12 +215,32 @@ def main():
             unsafe_allow_html=True,
         )
     else:
-        # ── FIXED: st.rerun() removed — was causing WebRTC component to reset ──
         context = webrtc_streamer(
             key="exercise-analysis",
             mode=WebRtcMode.SENDRECV,
             video_processor_factory=VideoProcessorClass,
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            rtc_configuration={
+                "iceServers": [
+                    {"urls": ["stun:stun.l.google.com:19302"]},
+                    {"urls": ["stun:stun1.l.google.com:19302"]},
+                    {"urls": ["stun:stun2.l.google.com:19302"]},
+                    {
+                        "urls": ["turn:openrelay.metered.ca:80"],
+                        "username": "openrelayproject",
+                        "credential": "openrelayproject"
+                    },
+                    {
+                        "urls": ["turn:openrelay.metered.ca:443"],
+                        "username": "openrelayproject",
+                        "credential": "openrelayproject"
+                    },
+                    {
+                        "urls": ["turn:openrelay.metered.ca:443?transport=tcp"],
+                        "username": "openrelayproject",
+                        "credential": "openrelayproject"
+                    }
+                ]
+            },
             media_stream_constraints={"video": True, "audio": False},
             async_processing=True
         )
@@ -257,7 +275,6 @@ def main():
                 "Time (sec)": "sum"
             }).reset_index()
             agg_df.index += 1
-            # FIX 2: removed unsupported border="horizontal" argument
             st.table(agg_df)
         else:
             st.info("No workout history found.")
