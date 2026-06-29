@@ -207,7 +207,7 @@ def main():
             plan_reps = st.number_input("Reps per Set", min_value=0, max_value=50, key="plan_reps", step=1)
             st.markdown("")
  
-            start_session_button = st.button("Start Workout", width="stretch", key="start_session_button")
+            start_session_button = st.button("Start Workout", key="start_session_button", use_container_width=True)
  
             if start_session_button:
                 st.session_state.exercise_type = plan_exercise
@@ -235,7 +235,7 @@ def main():
             meta = EXERCISE_META.get(exercise, {"icon": "🏋️"})
             st.info(f"{meta['icon']} **{exercise}** — {sets} Sets / {reps} Reps")
  
-            end_session_button = st.button("End Workout", key="end_session_button", width="stretch")
+            end_session_button = st.button("End Workout", key="end_session_button", use_container_width=True)
  
             if end_session_button:
                 st.session_state.workout_started = False
@@ -415,8 +415,3 @@ def main():
  
 if __name__ == "__main__":
     main()
- 
-
-
-
-
