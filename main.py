@@ -2,21 +2,20 @@ import streamlit as st
 import os
 import time
 import pandas as pd
-import cv2
-import numpy as np
 from dotenv import load_dotenv
 from services.auth.login_wall import render_login_wall, render_profile_card
 from services.state.session_defaults import initial_session_defaults
 from services.config.workout_config import EXERCISE_OPTIONS
-from services.ui.style_loader import load_css, inject_local_font
+from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_styles
 from services.persistence.exercise_repository import init_db
+from streamlit_webrtc import webrtc_streamer, WebRtcMode
+from services.vision.exercise_video_processor import VideoProcessorClass
+from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercises
 from groq import Groq
 from services.coaching.llm import LLMCoach
 from services.coaching.tts import TextToSpeech
 from services.coaching.voice_pipeline import VoicePipeline, autoplay_audio
-from services.vision.frame_processor import process_frame
-from services.tracking.metrics import sync_metrics_update_simple
 
 
 def main():
@@ -53,21 +52,6 @@ def main():
         except Exception as e:
             st.session_state.voice_pipeline = None
             st.session_state.voice_error = str(e)
-
-    # Init detectors once
-    if "detectors" not in st.session_state:
-        from detectors.squat import SquatDetector
-        from detectors.pushup import PushUpDetector
-        from detectors.biceps_curl import BicepsCurlDetector
-        from detectors.shoulder_press import ShoulderPressDetector
-        from detectors.lunges import LungesDetector
-        st.session_state.detectors = {
-            "Squats": SquatDetector(),
-            "Push-ups": PushUpDetector(),
-            "Biceps Curls (Dumbbell)": BicepsCurlDetector(),
-            "Shoulder Press": ShoulderPressDetector(),
-            "Lunges": LungesDetector(),
-        }
 
     workout_started = st.session_state.get("workout_started", False)
 
@@ -231,28 +215,23 @@ def main():
             unsafe_allow_html=True,
         )
     else:
-        exercise_type = st.session_state.get("exercise_type", "Squats")
+        context = webrtc_streamer(
+            key="exercise-analysis",
+            mode=WebRtcMode.SENDRECV,
+            video_processor_factory=VideoProcessorClass,
+            rtc_configuration={
+                "iceServers": [
+                    {"urls": ["stun:stun.l.google.com:19302"]},
+                    {"urls": ["stun:stun1.l.google.com:19302"]},
+                    {"urls": ["stun:stun2.l.google.com:19302"]},
+                ]
+            },
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True
+        )
 
-        # Camera capture
-        camera_image = st.camera_input("📸 Point camera at yourself", key="camera_feed")
-
-        if camera_image is not None:
-            file_bytes = np.asarray(bytearray(camera_image.read()), dtype=np.uint8)
-            frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            frame = cv2.flip(frame, 1)
-
-            detector = st.session_state.detectors.get(exercise_type)
-            processed_frame, metrics = process_frame(frame, exercise_type, detector)
-
-            if metrics:
-                sync_metrics_update_simple(metrics, exercise_type)
-
-            # Show processed frame with skeleton
-            processed_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB)
-            st.image(processed_rgb, channels="RGB", use_container_width=True)
-
-        else:
-            st.info("👆 Click the camera button above to start your workout analysis!")
+        sync_metrics_update(context)
+        inject_webrtc_styles()
 
     st.divider()
     st.markdown("#### Workout History")
