@@ -14,19 +14,30 @@ class LLMCoach:
             prompt += f" Form Issue: {issue}"
 
         messages = [
-            {"role": "system", "content": self.system_prompt},
+            {
+                "role": "system",
+                "content": self.system_prompt
+            },
             *self.history[-10:],
-            {"role": "user", "content": prompt}
+            {
+                "role": "user",
+                "content": prompt
+            }
         ]
 
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=messages,
                 temperature=0.4,
             )
 
             text = response.choices[0].message.content.strip()
+
+            self.history.append({
+                "role": "user",
+                "content": prompt
+            })
 
             self.history.append({
                 "role": "assistant",
@@ -41,7 +52,7 @@ class LLMCoach:
             # Fallback feedback
             if issue:
                 return f"Please correct your form: {issue}"
-            
+
             if event == "workout_started":
                 return "Workout started. Keep your form controlled."
 
