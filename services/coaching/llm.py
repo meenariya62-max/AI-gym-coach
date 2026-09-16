@@ -49,7 +49,6 @@ class LLMCoach:
         except Exception as e:
             print(f"Groq API Error: {e}")
 
-            # Fallback feedback
             if issue:
                 return f"Please correct your form: {issue}"
 
