@@ -27,13 +27,14 @@ class LLMCoach:
 
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b",
                 messages=messages,
                 temperature=0.4,
             )
 
             text = response.choices[0].message.content.strip()
 
+            # Save conversation history
             self.history.append({
                 "role": "user",
                 "content": prompt
@@ -49,6 +50,7 @@ class LLMCoach:
         except Exception as e:
             print(f"Groq API Error: {e}")
 
+            # Fallback feedback
             if issue:
                 return f"Please correct your form: {issue}"
 
