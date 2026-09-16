@@ -2,7 +2,7 @@ from services.config.workout_config import PROMPT
 
 
 class LLMCoach:
-    def init(self, groq_client):
+    def __init__(self, groq_client):
         self.client = groq_client
         self.history = []
         self.system_prompt = PROMPT
